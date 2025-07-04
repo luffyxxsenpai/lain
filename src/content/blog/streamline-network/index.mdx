@@ -1,0 +1,235 @@
+---
+title: 'How to streamline networking on linux'
+description: 'using systemd-networkd and systemd-resolved for a streamline networking setup on debian12'
+date: 2025-06-25
+tags: ['linux', 'networking']
+authors: ['luffy']
+---
+Networking on Linux can get confusing because there are many different tools to manage it. Tools like **ifupdown**, **NetworkManager**, and **systemd-networkd** can all be used — but mixing them can create conflicts.
+
+since i am setting up debian 12 as my base OS for my homelab cause ubuntu is a bloat, we will clean up the networking setup on **Debian** and configure it properly using **systemd-networkd** for managing the network and **systemd-resolved** for DNS. This keeps everything simple and easy to troubleshoot.
+
+---
+
+## Understanding How Different Systems Work
+
+Before we get started, let's clear up how different distros handle networking:
+
+### Ubuntu Server & Ubuntu AMI (Cloud)
+
+* Uses **netplan** with **systemd-netwrokd**, Netplan generates the required config in `/etc/netplan/50_cloudinit.yaml.` which can be used by systemd-networkd.
+    
+
+### Most Linux Desktop
+
+* Uses **NetworkManager** by default.
+    
+
+### Debian
+
+* Offers options like:
+    
+    * **ifupdown** (older method)
+        
+    * **NetworkManager**
+        
+    * **systemd-networkd** (modern, lightweight)
+        
+
+We will go with **systemd-networkd** because it's simple, clean, and good for servers or homelabs.
+
+---
+
+## Step 1: Install Required Tools
+
+Most likely, **systemd-networkd** is already installed on Debian, but to be sure:
+
+```bash
+sudo apt update
+sudo apt install systemd-networkd systemd-resolved -y
+```
+
+---
+
+## Step 2: Remove Unnecessary Tools
+
+First, let's get rid of any tools we don't need:
+
+```bash
+sudo apt remove --purge ifupdown network-manager net-tools -y
+sudo apt autoremove --purge -y
+```
+
+check if any leftover packages remain:
+
+```bash
+dpkg -l | grep -E 'ifupdown|network-manager'
+```
+
+If you see anything, purge it.
+
+---
+
+## Step 3: Enable systemd-networkd and systemd-resolved
+
+```bash
+sudo systemctl enable systemd-networkd --now
+sudo systemctl enable systemd-resolved --now
+```
+
+Check if they're running:
+
+```bash
+systemctl status systemd-networkd
+systemctl status systemd-resolved
+```
+
+**Tip:** To properly use `resolvectl`, make sure `/etc/resolv.conf` points to systemd's resolver:
+
+```bash
+sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+```
+
+---
+
+## Step 4: Configure the Network
+
+All configs for **systemd-networkd** live in `/etc/systemd/network/`.
+
+### 4.1 DHCP Example (Automatic IP)
+
+Create a file like [`10-ethernet.network`](http://10-ethernet.network):
+
+```bash
+sudo nvim /etc/systemd/network/10-ethernet.network
+```
+
+```ini
+[Match]
+Name=enp1s0f1  # Change this to your interface name
+
+[Network]
+DHCP=yes
+```
+
+### 4.2 Static IP Example
+
+```ini
+[Match]
+Name=enp1s0f1
+
+[Network]
+Address=192.168.1.50/24
+Gateway=192.168.1.1
+DNS=1.1.1.1
+```
+
+After creating the config, reload:
+
+```bash
+sudo systemctl restart systemd-networkd
+```
+
+---
+
+## Step 5: Basic Troubleshooting & Commands
+
+### 5.1 Check Link Status
+
+```bash
+networkctl status enp1s0f1
+```
+
+### 5.2 Show IP Addresses
+
+```bash
+ip a
+```
+
+### 5.3 Show Routes
+
+```bash
+ip route show
+```
+
+### 5.4 DNS Status
+
+```bash
+resolvectl status
+```
+
+### 5.5 Test Connectivity
+
+```bash
+ping 8.8.8.8
+ping google.com
+```
+
+---
+
+# Managing DNS with `systemd-resolved` on Debian
+
+Since we are now using **systemd-resolved**, our `/etc/resolv.conf` is a symlink managed by `systemd`. So, we don't edit it manually. Instead, we manage DNS settings properly using tools and configuration files.
+
+---
+
+## ✅ Temporary DNS Change
+
+This change is temporary and will reset After a system reboot or After restarting systemd-networkd
+
+### Command:
+
+```bash
+resolvectl dns <interface> <dns-address>
+```
+
+Example:
+
+```plaintext
+resolvectl dns enp1s0f1 1.1.1.1
+```
+
+To Verify:
+
+```plaintext
+resolvectl status
+```
+
+## ✅ Permanent DNS Change
+
+To set DNS permanently, edit your .network configuration file inside /etc/systemd/network/[xyz.network](http://xyz.network)
+
+Example of Static IP + DNS:
+
+```ini
+[Match]
+Name=enp1s0f1
+
+[Network]
+Address=192.168.1.50/24
+Gateway=192.168.1.1
+DNS=1.1.1.1
+```
+
+Apply the changes:
+
+`sudo systemctl restart systemd-networkd`
+
+## ✅ Using DHCP but Custom DNS (Ignore Router DNS)
+
+Even when using DHCP for automatic IP configuration, you can override the DNS provided by your router.
+
+```ini
+[Match]
+Name=enp1s0f1
+
+[Network]
+DHCP=yes
+DNS=1.1.1.1
+```
+
+Apply the changes: `sudo systemctl restart systemd-networkd`
+
+> so now to manage DNS, temporary way is using resolvectl dns &lt;interface\_name&gt; 1.1.1.1 , but to make it permanent we can simply edit our network file `/etc/systemd/network/`[`10-wired.network`](http://10-wired.network) file and define dns or other paramethers directly and simply restarat systemd-networkd
+
+---
