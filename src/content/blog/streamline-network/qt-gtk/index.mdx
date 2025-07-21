@@ -1,0 +1,128 @@
+---
+title: 'Theming QT5-QT6 & GTK application'
+description: 'themeing qt and gtk applications on hyprland window manager'
+date: 2025-07-21
+tags: ['linux', 'ricing']
+authors: ['luffy']
+---
+
+# GTK & QT Theming on Hyprland (Simple Guide)
+
+This is a basic guide to make your apps look nice and consistent on Hyprland.
+
+---
+
+## 1. 📦 Apps You Need
+
+### GTK:
+- `nwg-look`
+
+### QT:
+- `qt5-wayland`
+- `qt6-wayland`
+- `qt5ct`
+- `kvantum`
+- `nwg-look`
+- From AUR: `qt6ct-kde`
+
+---
+
+## 2. 🎨 Themes Used
+
+- **GTK Theme:** Everforest-Teal-Dark  
+  [Download](https://www.gnome-look.org/p/1695467) or [GitHub](https://github.com/Fausto-Korpsvart/Everforest-GTK-Theme)
+
+- **Cursor Theme:** Bibata-Modern-Ice (AUR)
+
+- **Icon Theme:** Tela-circle-dark  
+  [Download](https://www.pling.com/p/1359276/)
+
+- **Kvantum Theme (QT):** OrchisDark  
+  [Download](https://store.kde.org/p/1458909)
+
+---
+
+## 3. 📁 Where to Place Themes
+
+- GTK themes → `/usr/share/themes/`  
+- Cursor & Icon themes → `/usr/share/icons/`  
+- Kvantum themes → Import in Kvantum Manager
+
+---
+
+## 4. ⚙️ Set These in Hyprland
+
+In `~/.config/hypr/conf/environment.conf`:
+
+```ini
+env = GTK_THEME,Everforest-Teal-Dark
+env = GTK_ICON_THEME,Tela-circle-dark
+env = XCURSOR_THEME,Bibata-Modern-Ice
+env = XCURSOR_SIZE,24
+env = HYPRCURSOR_SIZE,24
+env = QT_QPA_PLATFORMTHEME,qt5ct
+env = QT_STYLE_OVERRIDE,kvantum
+```
+
+## 5. REBOOT
+
+
+# GTK & QT Theming on Hyprland (Simple Guide)
+
+This is a basic guide to make your apps look nice and consistent on Hyprland.
+
+---
+
+## 1. 📦 Apps You Need
+
+### GTK:
+- `nwg-look`
+
+### QT:
+- `qt5-wayland`
+- `qt6-wayland`
+- `qt5ct`
+- `kvantum`
+- `nwg-look`
+- From AUR: `qt6ct-kde`
+
+---
+
+## 2. 🎨 Themes Used
+
+- **GTK Theme:** Everforest-Teal-Dark  
+  [Download](https://www.gnome-look.org/p/1695467) or [GitHub](https://github.com/Fausto-Korpsvart/Everforest-GTK-Theme)
+
+- **Cursor Theme:** Bibata-Modern-Ice (AUR)
+
+- **Icon Theme:** Tela-circle-dark  
+  [Download](https://www.pling.com/p/1359276/)
+
+- **Kvantum Theme (QT):** OrchisDark  
+  [Download](https://store.kde.org/p/1458909)
+
+---
+
+## 3. 📁 Where to Place Themes
+
+- GTK themes → `/usr/share/themes/`  
+- Cursor & Icon themes → `/usr/share/icons/`  
+- Kvantum themes → Import in Kvantum Manager
+
+---
+
+## 4. ⚙️ Set These in Hyprland
+
+In `~/.config/hypr/conf/environment.conf`:
+
+```ini
+env = GTK_THEME,Everforest-Teal-Dark
+env = GTK_ICON_THEME,Tela-circle-dark
+env = XCURSOR_THEME,Bibata-Modern-Ice
+env = XCURSOR_SIZE,24
+env = HYPRCURSOR_SIZE,24
+env = QT_QPA_PLATFORMTHEME,qt5ct
+env = QT_STYLE_OVERRIDE,kvantum
+```
+
+## 5. REBOOT
