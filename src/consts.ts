@@ -1,9 +1,9 @@
 import type { IconMap, SocialLink, Site } from '@/types'
 
 export const SITE: Site = {
-  title: '₍˄·͈༝·͈˄₎◞ ̑̑',
+  title: 'LUFFY',
   description:
-    'just a guy with some tech shit.',
+    'my personal website.',
   href: 'https://homelain.click',
   author: 'luffy',
   locale: 'en-US',
