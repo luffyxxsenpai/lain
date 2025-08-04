@@ -7,8 +7,8 @@ export const SITE: Site = {
   href: 'https://homelain.click',
   author: 'luffy',
   locale: 'en-US',
-  featuredPostCount: 2,
-  postsPerPage: 5,
+  featuredPostCount: 6,
+  postsPerPage: 6,
 }
 
 export const NAV_LINKS: SocialLink[] = [
