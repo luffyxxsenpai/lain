@@ -68,6 +68,7 @@ image: 'docker-whale.png'
 Docker allows us to run multiple applications on the same host. but without proper isolation one container could read or modify another container'd data or hog system resources.
 so to handle this problem docker does the following 
 - LINUX NAMESPACES are like virtual walls that isolate key resources for each container like PID, NET, MNT, UTS, IPS, USER
+
 | Namespace | Isolates…                      | Effect                                                                                  |
 | --------- | ------------------------------ | --------------------------------------------------------------------------------------- |
 | `PID`     | Process IDs                    | A container sees **only its own** processes. You can’t `ps aux` into other containers.  |
@@ -130,6 +131,8 @@ so to handle this problem docker does the following
 When you run docker run, Docker performs several internal steps to create and start a container from an image. Here's a breakdown of what happens behind the scenes:
 
 - user runs the command `docker run -d -p 8080:80 nginx`
+
+
 | Step                               | Internal Action                                                                                                                                |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1. Docker CLI sends request**    | `docker run` sends a request to the **Docker Daemon (`dockerd`)** via REST API.                                                                |
