@@ -1,0 +1,168 @@
+---
+title: 'Scenario based DOCKER questions'
+description: 'Scenario based docker questions for interview practice'
+date: 2025-08-05
+tags: ['basic', 'docker']
+authors: ['luffy']
+image: 'docker-whale.png'
+---
+
+# SCENARIO BASED DOCKER QUESTION
+
+## 🟢 Beginner (Easy)
+**1. What is the difference between docker run and docker start?**
+- **Docker run**
+- creates and starts a new container from an image
+- accepts configuration options like port mapping, environment variables, volumes, etc
+
+- **docker start**
+- starts an existing stopped container
+- does not accept configuration options 
+- useful for restarting containers that were previously stopped
+
+**2. What’s the difference between COPY and ADD in a Dockerfile?**
+- `COPY` copies files and directories from the build context into the image 
+- `ADD` provides extra features like automatically extract local tar archives or fetch files from a remote url
+
+**3. What is the difference between CMD and ENTRYPOINT?**
+- `CMD`
+- provides default arguments for the container's main command
+- can be overridden at runtime by passing new arguments to `docker run`
+- used when you want a default behaviour but allow it to change
+
+- `ENTRYPOINT`
+- defines the main executable to run in the container
+- always runs unless explicitly overridden using `--entrypoint`
+- used when you want the container to behave like a fixed command wrapper
+
+**4. What are Docker volumes and how are they used?**
+- Volumes are persistent storage mechanisms managed by Docker.
+- They store data outside the container's writable layer, so data is not lost when the container stops or is deleted.
+- Volumes live under: `/var/lib/docker/volumes/`
+
+- they are used for:
+    - To persist data (e.g., databases)
+    - To share data between containers
+    - To back up/restore container data easily
+
+**5. How do you expose and map ports in Docker?**
+- when using docker run `docker run -d -p 80:80 443:443 nginx`
+
+**6. How do you clean up unused Docker images and containers?**
+- REMOVE STOPPED CONTAINERS - `docker container prune`
+- REMOVE UNUSED IMAGES - `docker image prune`
+- REMOVE UNUSED VOLUMES - `docker volume prune`
+- REMOVE UNUSED NETWORKS - `docker network prune`
+- REMOVE EVERYTING UNUSED - `docker system prune`
+- REMOVE BUILD CACHE - `dcoker builder prune`
+
+**7. Docker Container Exits Immediately — How will you troubleshoot?**
+- check container logs `docker logs containerid`
+- run container interactively to manully test it `docker exec -it mycontainer /bin/bash`
+- check dockerfile `CMD` or `ENTRYPOINT` for any misconfiguration 
+- veryify if apps need to run in foreground in dockerfile 
+- check contaier exit code to check if it exited normally or due to error `docker inspect contaienrid`
+
+## 🟡 Intermediate (Moderate)
+**8. How does Docker ensure isolation between containers?**
+Docker allows us to run multiple applications on the same host. but without proper isolation one container could read or modify another container'd data or hog system resources.
+so to handle this problem docker does the following 
+- LINUX NAMESPACES are like virtual walls that isolate key resources for each container like PID, NET, MNT, UTS, IPS, USER
+| Namespace | Isolates…                      | Effect                                                                                  |
+| --------- | ------------------------------ | --------------------------------------------------------------------------------------- |
+| `PID`     | Process IDs                    | A container sees **only its own** processes. You can’t `ps aux` into other containers.  |
+| `NET`     | Network interfaces, IP routing | Each container has its **own virtual NIC, IP, and routing** table.                      |
+| `MNT`     | File system mount points       | Containers mount only their own file systems. No `/etc` or `/home` from host is shared. |
+| `UTS`     | Hostname and domain name       | Each container can have a **different hostname**, independent from the host.            |
+| `IPC`     | Shared memory and semaphores   | Shared memory used in apps (like PostgreSQL) is container-specific.                     |
+| `USER`    | User and group IDs             | You can remap root in container to an unprivileged host user.                           |
+
+
+**9. How do health checks work in Docker?**
+- Docker health checks allows us to monitor weather a container application is healthy and functioning correctly.
+- we can define health checks in the `dockerfile` or `docker run` both
+- `HEALTHCHECK --interval=30s --timeout=5s --start-period=5sec --retires=3 CMD curl -f http://localhost:80 || exit 1`
+
+| Option           | What it does                                   |
+| ---------------- | ---------------------------------------------- |
+| `--interval`     | Time between checks (default: 30s)             |
+| `--timeout`      | Max time to wait for check to complete         |
+| `--start-period` | Grace period before checking begins            |
+| `--retries`      | Number of failures before marking as unhealthy |
+
+**10. How do you troubleshoot a container that keeps restarting?**
+- it can be restarting due to restart policy defined. 
+- if it's set to always or on-failure, Docker will keep restarting the container automatically
+- temporarily disable the restart policy to manually inspect and fix the container`docker update --restart=no <container_id>`
+
+
+**11. How do you debug a running Docker container?**
+- attach to running container via `docker exec -it container_id /bin/bash`
+- view realtime logs `docker logs -f containerid`
+
+**12. Explain the difference between docker exec and docker attach.**
+- `docker exec`
+- runs a new command in the running container, starting a new shell
+- it does not interfere with the container main processes
+- safe for debugging
+
+- `docker attach`
+- connects our terminal to the main process of the container defined in `CMD` or `ENTRYPOINT`
+- we see exactly what the app is doing
+- closing this session may terminate the main process and stop the container
+
+**13. How does Docker layer caching work?**
+- each instruction in a dockerfile creates a layer residing in `/var/lib/docker/overlay2`
+- they cant be changed once created and are shared between images if identical 
+- when theres a change in a a layer, docker will rebuild that and all other layer after that  
+- Docker stops using cache at the first changed layer, and rebuilds everything below it.
+
+**14. How would you reduce the size of a large Docker image?**
+- use small base images like alpine or distroless
+- use multistate build
+- minimize layers 
+- remove unnecessary files
+- use `.dockerignore`
+- avoild installing unneeded packages `RUN apt-get install -y --no-install-recommends curl`
+
+## 🔴 Advanced (Tricky)
+**15. What happens internally when you run docker run?**
+When you run docker run, Docker performs several internal steps to create and start a container from an image. Here's a breakdown of what happens behind the scenes:
+
+- user runs the command `docker run -d -p 8080:80 nginx`
+| Step                               | Internal Action                                                                                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Docker CLI sends request**    | `docker run` sends a request to the **Docker Daemon (`dockerd`)** via REST API.                                                                |
+| **2. Image Lookup**                | Docker checks if the **image (e.g., `nginx`) exists locally**. If not, it **pulls it from the registry** (like Docker Hub).                    |
+| **3. Container Creation**          | Docker **creates a container** from the image. It allocates a **unique container ID** and filesystem using a **union filesystem** (overlayfs). |
+| **4. Filesystem Layers**           | It stacks the **image layers** as read-only and adds a **read-write layer** on top for this container.                                         |
+| **5. Network Setup**               | Docker creates or joins the container to a **network** (default: bridge). It assigns a **private IP**.                                         |
+| **6. Mount Volumes**               | If any `-v` or `--mount` options are passed, it **mounts volumes or bind mounts** into the container filesystem.                               |
+| **7. Set Environment Variables**   | Docker injects environment variables defined by `-e` flags or in the image metadata.                                                           |
+| **8. Set Entrypoint & CMD**        | Docker determines the command to run using the image’s `ENTRYPOINT` and `CMD`, or overrides them via the CLI.                                  |
+| **9. Start Container Process**     | Docker uses **cgroups** and **namespaces** to isolate the container, then **starts the main process** inside the container (PID 1).            |
+| **10. Monitor the Process**        | Docker monitors this process — when it exits, the container stops.                                                                             |
+| **11. Optional: Attach or Detach** | If you use `-it`, Docker attaches your terminal to the container. If you use `-d`, it detaches and runs in the background.                     |
+
+
+
+**17. What are the security risks with Docker and how do you mitigate them?**
+1. containers runs as root by default so define the `USER` tag in dockerfile to run as a non root user
+2. vulnerable base images can slip trhough so only use official or trusted image with image scanning tools like docker scout, trivy
+3.  Docker daemon (/var/run/docker.sock) has full control of Docker — exposing it can lead to total system compromise.
+4. Insecure Networks and Port Exposure
+5. Insecure Secrets Management
+6. Mounting sensitive host directories (like /etc, /var/run) can lead to host compromise.
+
+**18. What is Docker Content Trust (DCT)?**
+Docker Content Trust (DCT) is a security feature that ensures only verified and signed images are pulled and run, protecting you from using tampered or untrusted images.
+- What DCT Does:
+- Enables image signing and verification
+- Ensures integrity (image not modified)
+- Ensures authenticity (comes from a trusted publisher)
+
+- How It Works:
+- Docker uses the Notary service under the hood (based on The Update Framework - TUF)
+- When pulling an image with DCT enabled:
+- Docker checks for a valid digital signature from the image publisher.
+- If no valid signature is found, the pull fails.
