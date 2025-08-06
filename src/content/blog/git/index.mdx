@@ -1,0 +1,222 @@
+---
+title: 'GIT GET GOOD'
+description: 'get good with git'
+date: 2025-08-06
+order: 0
+tags: ['basic', 'git', 'github']
+authors: ['luffy']
+image: 'git.png'
+---
+
+1. What is git?
+- Git is a distributed version control system designed to track changes in files and coordinate work among multiple contributors.
+- it is used to manage source code, track project history, facilitae collaboration, and enable branching and merging workflows.
+
+2. what is the difference between git and github?
+- Git is the version control system, while Github is a hosting platform for git repositories.
+- github provides additional features such as collaboration tools, issue tracking, pull requests, integration with other applications.
+
+3. What is repository in Git?
+- A repository in git is a collection of files and directories along with the version gistory of those files.
+- it represents a project and serves as the central location for storing, managing and sharing code.
+
+4. How do you create a new git repository?
+- `git init` initializes a new git repository in the current directory, creating a `.git` folder to store version control metadata.
+
+5. Explain the difference between a git commit and a git push?
+- `git commit` records changes to the repository's files, creating a new snapshot or version of the project.
+- `git push` on the other hands, sends committed changes from a local repository to a remote repository, enabling collaboration and sharing of code with others.
+
+6. What is git branch?
+- Git branch is a lightweight movable pointer to a commit in the repository's version history.
+- branches are used to isolate work on new features, bug fixes or experiments without affecting the main codebase.
+
+7. How to create and switch between branches?
+- to create a new branch `git branch branch-name`
+- to switch to new branch `git checkout branch-name` or `git switch branch-name`
+- create and switch in one step `git checkout -b branch-name` or `git switch -c branch-name`
+
+8. What is a Git merge?
+- a git merge combines changes from one branch into another branch
+- it integrates the changes made in the source branch (feature) into the target branch (main) by creating a new merge commit that incorporates both sets of changes.
+
+9. What is a Git pull request?
+- A git pull request is a mechanism for proposing changes and initiating code review in a collaborative development workflow.
+- it allows contributors to request that their changes be reviewed, disscussed and eventually merged into the target branch by project maintainers.
+
+10. What is git Fork?
+- Git fork is a copy of a repository that allows users t ofreely experiment with changes withou affecting the original repository.
+
+11. What are git tags?
+- git tags are references to specific points in a repository's version history.
+- typically used to mark version or release number
+
+12. How do you revert a commit in git?
+- `git revert commit-id`
+- this creates a new commit that undoes the changes introduced in specified commit id
+
+13. Explain the concept of Git remote and remote repository?
+- git remote is a refrence to a remote reposity, typically hosted on a server like github, gitlab or bitbucket
+- it acts as a refrence to remote repo
+
+14. How do you resolve merge conflicts in git?
+- merge conflicts occur when git cannot automatically merge changes from different branches.
+- to fix this , we manually edit the conflicting files to resolve conflicts, mark them as resolved using git add, and commit the changes
+- after that run `git merge --continue` to finally merge.
+
+15. What is git rebase and when it is used?
+- git rebase is a command used to reapply commits on top of another base commit.
+- it is commonly used to integrate changes from one branch onto another while maintaning a linear commit history.
+- rebase should be used to keep commit history clean and avoid unnecessary merge commits in feature branches.
+
+16. What is the difference between git pull, fetch, clone, push, remote ?
+- GIT CLONE - it copies the whole project with all the commit history and add setup the remote origin.
+- GIT PULL - To fetch the latest changes from the remote and automatically merge them into your current branch.
+- GIT FETCH - to fetch new commits and branches from the remote but without merging them into local branch  
+- GIT PUSH - uploads our local commits to the remote repository
+- GIT REMOTE - manage connection to our remote repository
+
+17. what is the difference between git diff and git status?
+- GIT STATUS - tells what has changed in your working directory and staging area
+- GIT DIFF - shows the exact line-by-line changes made to tracked files that are not staged 
+
+18. what is the difference between git merge and git rebase?
+- GIT COMMIT - combines two branches by creating a new commit
+- GIT REBASE - 
+
+
+19. what is the use of staging area or indexing in git?
+- The staging area (also known as the index) is an intermediate zone where you can prepare changes before committing them to the repository.
+
+20. what does the command git cofig does?
+- the `git config` command is used to view and set configuration options for git 
+- example 
+```bash
+git config --global user.name "John Doe"
+git config --global user.email "john@example.com"
+
+```
+
+21. what does git cherry-pick command do?
+- `git cherry-pick` is used to apply the changes from a specific commit from one branch onto your current branch without merging the entire branch.
+- `git cherry-pick commithash`
+
+22. what is the difference between git revert and git reset?
+- Both git revert and git reset are used to undo changes in Git — but they work very differently
+- `git revert commithash` adds a new commit that inverts the changes made by the original commit.
+- `git reset [--soft | mixed | hard] commit-hash` move the head to a previous commit
+ ```bash
+--soft = undo commit but keep changes staged
+--mixed = unstage changes, keep local edits
+--hard = rase commits and local changes
+ ```
+
+23. what do you mean by head in term of git and also tell the number of heads that can be present in a repository?
+`HEAD` is a refrence to the current snapshot of your working directory. it usually points to the latest commit on the current branch you are working on.
+- if you are on `main`, then `HEAD` points to `refs/heads/main`
+- a Git repository has only one `HEAD` at a time
+- However, you can have multiple branches, and each branch has its own tip — but these are not `HEAD`s.
+
+24. Can you recover a deleted branch in git?
+- Yes, we can recover a deleted branch in Git, as long as the commits haven't been garbage collected yet.
+- Git doesn't immediately delete the commits — instead, it simply removes the branch reference.
+- The underlying commits still exist in Git’s database until they're garbage collected (which usually happens after ~30 days by default).
+
+25. How to see commit history in git?
+- `git log` is used to see logs in git 
+- useful options to combine with 
+
+| Command                         | Description                                                    |
+| ------------------------------- | -------------------------------------------------------------- |
+| `git log --oneline`             | Shows each commit in a single line (short hash + message)      |
+| `git log --graph`               | Visual ASCII graph of branches and merges                      |
+| `git log --stat`                | Shows what files changed and how many lines were added/removed |
+| `git log -p`                    | Shows the patch (code diff) introduced in each commit          |
+| `git log --since="2 weeks ago"` | View commits from the last 2 weeks                             |
+| `git log --author="Alice"`      | Show commits by a specific author                              |
+| `git log file.txt`              | View history of changes to a specific file                     |
+
+
+---
+# GIT COMMANDS
+
+## git setup 
+
+
+| Command                                            | Description                         |
+| -------------------------------------------------- | ----------------------------------- |
+| `git config --global user.name "Your Name"`        | Set your Git username globally      |
+| `git config --global user.email "you@example.com"` | Set your Git email globally         |
+| `git config --list`                                | Show all Git configuration settings |
+| `git version`                                      | Check installed Git version         |
+
+
+## staging and committing changes
+
+
+| Command                    | Description                                           |
+| -------------------------- | ----------------------------------------------------- |
+| `git status`               | Show the status of working directory and staging area |
+| `git add <file>`           | Stage a specific file                                 |
+| `git add .`                | Stage all changes in current directory                |
+| `git commit -m "message"`  | Commit staged changes with a message                  |
+| `git commit -am "message"` | Add and commit tracked files in one step              |
+
+
+
+## viewing commit history
+
+
+| Command                           | Description                            |
+| --------------------------------- | -------------------------------------- |
+| `git log`                         | Show full commit history               |
+| `git log --oneline`               | Show compact commit history            |
+| `git log --graph --oneline --all` | Show graphical history of all branches |
+| `git show <commit>`               | Show details of a specific commit      |
+
+
+
+## branching 
+
+
+| Command                    | Description                                      |
+| -------------------------- | ------------------------------------------------ |
+| `git branch`               | List branches                                    |
+| `git branch <branch-name>` | Create a new branch                              |
+| `git checkout <branch>`    | Switch to a branch                               |
+| `git checkout -b <branch>` | Create and switch to a branch                    |
+| `git merge <branch>`       | Merge given branch into current branch           |
+| `git branch -d <branch>`   | Delete a branch                                  |
+| `git switch <branch>`      | Alternative to `checkout` for switching branches |
+
+
+
+
+## remote repositories 
+
+| Command                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `git remote -v`               | Show remote connections              |
+| `git remote add origin <url>` | Link to a remote repository          |
+| `git push -u origin <branch>` | Push branch to remote (first time)   |
+| `git push`                    | Push local changes to remote         |
+| `git pull`                    | Fetch and merge changes from remote  |
+| `git fetch`                   | Fetch changes from remote (no merge) |
+
+
+
+## fixing mistakes
+
+
+| Command                       | Description                                       |
+| ----------------------------- | ------------------------------------------------- |
+| `git restore <file>`          | Undo changes in working directory                 |
+| `git restore --staged <file>` | Unstage a file                                    |
+| `git reset <file>`            | Unstage a file (older syntax)                     |
+| `git reset --hard`            | Reset working directory and index to last commit  |
+| `git revert <commit>`         | Create a new commit that undoes a previous commit |
+| `git clean -fd`               | Remove untracked files and directories            |
+| `git checkout -- <file>`      | Revert file to last committed version             |
+
+
+
