@@ -8,174 +8,162 @@ authors: ['luffy']
 image: 'terra.png'
 ---
 
-# understand terraform
+---
 
-
-1. how does terraform handle state, and whawt are the best practices for managing terrafrom state in a team?
-A. terraform maintains state to track resources it manages. it stores this state in a file (terraform.tfstate). best practices in for managing state file in a team includes:
+**1. how does terraform handle state, and what are the best practices for managing terrafrom state in a team?**
+Terraform maintains state to track resources it manages. it stores this state in a file (terraform.tfstate). best practices in for managing state file in a team includes:
   - use remote backends like AWS S3 with DynamoDB locking, terraform cloud
   - enable state locking to prevent concurrent modifications
   - use workspaces or multi-env setup for different environments
   - encrypt state file especially if they contain sensitive data 
   - be careful when using state commands 
 
-2. Explain terrafrom's dependency resolution mechanism.
-A. Implicit dependencies: based on how resources refrence each other 
-   Explicit dependencies: by using `depends_on` argument to specify specific order of execution
+**2. Explain terrafrom's dependency resolution mechanism.**
+- Implicit dependencies: based on how resources refrence each other 
+- Explicit dependencies: by using `depends_on` argument to specify specific order of execution
 
-3. What happens when you manually delete a resource that terraform manages?
-B. if a resource is deleted outside of terraform manually
-      - running `terraform plan` will deletect that the resource is missing
-      - running `terraform apply` will recreate the resource
-      - if the resource was removed from the `.tf` file and terraform apply is run, terraform won't manage it anymore
+**3. What happens when you manually delete a resource that terraform manages?**
+if a resource is deleted outside of terraform manually
+- running `terraform plan` will deletect that the resource is missing
+- running `terraform apply` will recreate the resource
+- if the resource was removed from the `.tf` file and terraform apply is run, terraform won't manage it anymore
 
-4. How do you manage secrets in Terraform?
-A. - Environment variables- use TF_VAR_variablename with sensitive values
-   - terrafrom vault provider: store secrets in hashicorp vault
-   - aws secret manager / azure key vault: retrive secrets dynamically
-   - sensitive variables - mark variables as sensitive in terraform 
-   - do not commit `terraform.tfstate` file to version control as it many contain secrets
+**4. How do you manage secrets in Terraform?**
+- Environment variables- use TF_VAR_variablename with sensitive values
+- terrafrom vault provider: store secrets in hashicorp vault
+- aws secret manager / azure key vault: retrive secrets dynamically
+- sensitive variables - mark variables as sensitive in terraform 
+- do not commit `terraform.tfstate` file to version control as it many contain secrets
 
-5. What are Terraform Workspaces, and how do they differ from Modules?
-A. - Workspaces allow you to manage multiple instance of terraform configuration within the same backend
-        ```bash
-            terraform workspace new dev
-            terraform workspace select dev
-        ```    
-   - Modules are reusable terraform configurations that help with abstraction and code organization.
+**5. What are Terraform Workspaces, and how do they differ from Modules?**
+- Workspaces allow you to manage multiple instance of terraform configuration within the same backend
+    ```bash
+        terraform workspace new dev
+        terraform workspace select dev
+            ```    
+- Modules are reusable terraform configurations that help with abstraction and code organization.
 
-6. How does Terraform handle drift detection?
-A. terraform detects configuration drift by running `terraform plan`. if the actual state differs from the expected state, terraform highlights the drift and prompts an update. to prevent drift:
+**6. How does Terraform handle drift detection?**
+terraform detects configuration drift by running `terraform plan`. if the actual state differs from the expected state, terraform highlights the drift and prompts an update.
+- to prevent drift:
     - implement CI/CD checks.
     - use terrafrom state list to inspect current resources.
 
-7. How does Terraform's `for_each` differ from `count` ?
-A.   - `count` is index-based (`count.index`), useful for simple lists.
-     - `for_each` works with sets and maps, allowing dynamic key-value associations.
-     - example using `count`:
-            ```tf
-            resource "aws_instance" "example" {
-              count = 3
-              ami = "ami-1234567890"
-            }
-            ``` 
-     - example using `for_each`:
-            ```tf
-              resource "aws_instance" "example"
-                for_each = toset (["dev", "qa", "prod"])
-                ami = "ami-1234"
-                tags = { Name = each.key }
-            ```
+**7. How does Terraform's `for_each` differ from `count` ?**
+- `count` is index-based (`count.index`), useful for simple lists.
+- `for_each` works with sets and maps, allowing dynamic key-value associations.
+- example using `count`:
+       ```tf
+       resource "aws_instance" "example" {
+         count = 3
+         ami = "ami-1234567890"
+       }
+       ``` 
+- example using `for_each`:
+       ```tf
+         resource "aws_instance" "example"
+           for_each = toset (["dev", "qa", "prod"])
+           ami = "ami-1234"
+           tags = { Name = each.key }
+       ```
 
-8. What is the purpose of `terraform refresh`?
-A. `terraform refresh` updates the state file with the real-world state but does not apply changes. 
+**8. What is the purpose of `terraform refresh`?**
+`terraform refresh` updates the state file with the real-world state but does not apply changes. 
 
-9. What is terraform import and how do you use it?
-A. terraform import allows importing existing infrastructure into terrafrom state without modifying resources. after importing update the `.tf` file to match the real-world configuration.
+**9. What is terraform import and how do you use it?**
+terraform import allows importing existing infrastructure into terrafrom state without modifying resources. after importing update the `.tf` file to match the real-world configuration.
 
-10. How do you use `terraform taint` command?
-A. `terraform taint` marks a resource for recreation in the next `terraform apply`.
+**10. How do you use `terraform taint` command?**
+`terraform taint` marks a resource for recreation in the next `terraform apply`.
     
-11. Explain the idfference between `terraform destory` and `terraform apply -destroy`?
-A.  - `terraform destory`: Destory all resources in the state file
-    - `terraform apply -destroy`: also destroy resources but allows for additional plan checks before applying 
+**11. Explain the idfference between `terraform destory` and `terraform apply -destroy`?**
+- `terraform destory`: Destory all resources in the state file
+- `terraform apply -destroy`: also destroy resources but allows for additional plan checks before applying 
 
-12. How can you handle cross-account deployments in Terraform?
-A. - use multiple AWS profiles
-   - use terraform providers with different aliases
+**12. How can you handle cross-account deployments in Terraform?**
+- use multiple AWS profiles
+- use terraform providers with different aliases
 
-13. What is the purpose of the `terraform data` source?
-A. data sources allows terrafrom to fetch existing data without creating new resources.
+**13. What is the purpose of the `terraform data` source?**
+- data sources allows terrafrom to fetch existing data without creating new resources.
 
-14. How does terraform handle provider versioning?
-A. terraform allows version constraints for providers:
-        ```bash
-          terraform {
-            required_providers {
-              aws = {
-                source = "hashicorp/aws"
-                version = "~> 4.0"
-              }
-            }
-          }
-        ``` 
-  - use `terraform providers` to check installed versions.
+**14. How does terraform handle provider versioning?**
+terraform allows version constraints for providers:
+```bash
+  terraform {
+    required_providers {
+      aws = {
+        source = "hashicorp/aws"
+        version = "~> 4.0"
+      }
+    }
+  }
+``` 
+- use `terraform providers` to check installed versions.
 
 15. How do you optimize Terraform performance for largee infrastructures?
-A. - enable parallelism (`terraform apply -parallelism=10`)
-   - use modules to break down configuration
-   - use caching for remote states
-   - use state locking to prevent concurrency issues
-   - use target flag to apply changes to specific resources.
+- enable parallelism (`terraform apply -parallelism=10`)
+- use modules to break down configuration
+- use caching for remote states
+- use state locking to prevent concurrency issues
+- use target flag to apply changes to specific resources.
 
----
+16. You need to update an EC2 instance's AMI ID without downtime. Terraform wants to destory and recreate the instance. how do you avoid downtime?
+- use crete before destroy in lifecycle rules to ensure the new instance is created before the old is deleted
+```bash
+  resource "aws_instance" "example" {
+      ami = var.ami_id
+      instance_type = "t3.micro"
+      lifecycle {
+          create_before_destroy = true
+      }
+    }
+```
 
-
-# scenario based
-### ZERO-DOWNTIME DEPLOYMENT OF AN EC2 INSTANCE
-Q. You need to update an EC2 instance's AMI ID without downtime. Terraform wants to destory and recreate the instance. how do you avoid downtime?
-A. - use crete before destroy in lifecycle rules to ensure the new instance is created before the old is deleted
-
-    ```bash
+17. You need to deploy an S3 bucket in ap-south-1 and an ec2 instance in us-east-1 using the same terraform configuration. how do you achieve this?
+- use multiple provider configurations
+  ```bash
+      provider "aws" {
+        alias = "ap-south"
+        region = "ap-south-1"
+      }
+      provider "aws" {
+        alias = "us-east"
+        region = "us-east-1"
+      } 
+      resource "aws_s3_bucket" "example" {
+        provider = aws.us-east
+        bucket = "my-bucket"
+      }
       resource "aws_instance" "example" {
-          ami = var.ami_id
-          instance_type = "t3.micro"
-          lifecycle {
-              create_before_destroy = true
-          }
-        }
-    ```
+        provider = aws.ap-south
+        ami = "ami-1234"
+        instance_type = "t2.micro"
+      }
+  ```
 
-### MANAGING CROSS-REGION INFRASTRUCTURE
-Q. You need to deploy an S3 bucket in ap-south-1 and an ec2 instance in us-east-1 using the same terraform configuration. how do you achieve this?
-A. - use multiple provider configurations
-    ```bash
-        provider "aws" {
-          alias = "ap-south"
-          region = "ap-south-1"
-        }
-        provider "aws" {
-          alias = "us-east"
-          region = "us-east-1"
-        } 
+18. Your Terraform-managed AWS infrastructure was modified manually by another team. Terraform does not show changes, but AWS console does. How do you detect and correct this?
+- Run `terraform plan -refresh-only` to detect drift without making changes
+- use `terraform state list` to inspect tracked resources
+- if any resource is missing, re-import it
+- if necessary, `terraform apply` to restore the expected configuration
 
-        resource "aws_s3_bucket" "example" {
-          provider = aws.us-east
-          bucket = "my-bucket"
-        }
+19. Your company wants to ensure that only t2.micro instances are used to control AWS costs. How do you enforce this in Terraform?
+- use a terraform validation rule in the variables.tf file to restrict instance types
+- example:
+   ```bash
+       variable "instance_type" {
+         description = "aws ec2 instance type"
+         type = string
+         validation {
+           condition = contains(["t2.micro], var.instance_type)
+           error_message = "only t2.micro is allowed"
+         }
+       }
+   ```
 
-        resource "aws_instance" "example" {
-          provider = aws.ap-south
-          ami = "ami-1234"
-          instance_type = "t2.micro"
-        }
-    ```
-
-### HANDLING TERRAFORM DRIFT IN PRODUCTION
-Q. Your Terraform-managed AWS infrastructure was modified manually by another team. Terraform does not show changes, but AWS console does. How do you detect and correct this?
-A. - Run `terraform plan -refresh-only` to detect drift without making changes
-   - use `terraform state list` to inspect tracked resources
-   - if any resource is missing, re-import it
-   - if necessary, `terraform apply` to restore the expected configuration
-
-### ENFORCING TERRAFORM SECURITY POLICIES
-Q. Your company wants to ensure that only t2.micro instances are used to control AWS costs. How do you enforce this in Terraform?
-A. - use a terraform validation rule in the variables.tf file to restrict instance types
-   - example:
-      ```bash
-          variable "instance_type" {
-            description = "aws ec2 instance type"
-            type = string
-            validation {
-              condition = contains(["t2.micro], var.instance_type)
-              error_message = "only t2.micro is allowed"
-            }
-          }
-      ```
-
-### PREVENTING ACCIDENTAL DELETION OF CRITICAL RESOURCES
-Q. You want to prevent the accidental deletion of a production RDS database managed by terraform. how do you enforce this?
-A. use `prevent_destroy` lifecycle rules:
+20. You want to prevent the accidental deletion of a production RDS database managed by terraform. how do you enforce this?
+- use `prevent_destroy` lifecycle rules:
       ```bash
         resource "aws_db_instance" "production_db" {
           identifier = "prod-db"
@@ -188,74 +176,110 @@ A. use `prevent_destroy` lifecycle rules:
         }
       ```
 
-### HANDLING TERRAFORM STATE LOCKING ISSUES
-Q. Your team is using terraform with remote state in s3. A team member's terraform run failed, leaving the state locked. how do you resolve this issue?
-A. Terraform automatically locks the state in DynamoDB when using backend s3. if a lock persists, run 
-      - `terraform force-unlock LOCKID`
+21. Your team is using terraform with remote state in s3. A team member's terraform run failed, leaving the state locked. how do you resolve this issue?
+Terraform automatically locks the state in DynamoDB when using backend s3. if a lock persists, run - `terraform force-unlock LOCKID`
 
-### ROLLING BACK A FAILED TERRAFORM DEPLOYMENT
-Q. Your terraform apply modified resources incorrectly, causing an outage. how can you quickly roll back to the previous state?   
-A. - if you have a previous state file stored remotely, restore it.
-   - `terraform state pull > backup.tfstate`
-   - `terraform state push backup.tfstate`
-   - revert the incorrect code and apply terraform again
+22. Your terraform apply modified resources incorrectly, causing an outage. how can you quickly roll back to the previous state?   
+- if you have a previous state file stored remotely, restore it.
+- `terraform state pull > backup.tfstate`
+- `terraform state push backup.tfstate`
+- revert the incorrect code and apply terraform again
 
-### DYNAMIC RESOURCE SCALING WITH TERRAFORM MODULES
-Q. Your infrastructure requires different EC2 instance type based on environment. how can you dynamically assign instance types in a terraform module?
-A. we can use a map inside variables.tf:
-      ```bash
-          variable "instance_type_map" {
-            type = map(string)
-            default = {
-              dev = "t2.micro"
-              prod = "t3.large"
-            }
-          }
-
-
-          resource "aws_instance" "example" {
-            ami_id = "ami-12234"
-            instance_type = var.instance_type_map[var.environment]
-
-          }
-      ```
-    - now define the environment as variable in code to get the correct instance type
-
-
-### MANAGING LARGE TERRAFORM STATE EFFICIENTLY
-Q. Your terraform state file is growing too large, causing slow performance. How can you manage it efficiently?
-A. - use terraform state splitting: seperate resources into multiple state files using different workspaces or backend
-   - enable terraform state locking: sotre state in S3 with DynamoDB to prevent concurrency issues
-      ```bash
-        terraform {
-          backend "s3" {
-            bucket  = "my-terraform-state"
-            key = "prod/terraform.tfstate
-            region  = "ap-south-1"
-            dynamodb_table = "terraform-lock"
-          }
+23. Your infrastructure requires different EC2 instance type based on environment. how can you dynamically assign instance types in a terraform module?
+- we can use a map inside variables.tf:
+  ```bash
+      variable "instance_type_map" {
+        type = map(string)
+        default = {
+          dev = "t2.micro"
+          prod = "t3.large"
         }
-      ```
+      
+      resource "aws_instance" "example" {
+        ami_id = "ami-12234"
+        instance_type = var.instance_type_map[var.environment
+      }
+  ```
+- now define the environment as variable in code to get the correct instance type
 
-### AVOIDING RESOURCE RECREATION IN TERRAFORM
-Q. You updated an EC2 instance type, but terraform wants to destroy and recreate it instead of modifying it in-place. how do you prevent this?
-A. - use the `ignore_changes` lifecycle rule to keep the existing resources:
-      ```bash
-          resource "aws_instance" "example" {
-            ami = "ami-1233"
-            instance_type = "t2.micro"
-            lifecycle {
-              ignore_changes = [instance_type]
-            }
-          }
-      ```
+24. Your terraform state file is growing too large, causing slow performance. How can you manage it efficiently?
+- use terraform state splitting: seperate resources into multiple state files using different workspaces or backend
+- enable terraform state locking: sotre state in S3 with DynamoDB to prevent concurrency issues
+  ```bash
+    terraform {
+      backend "s3" {
+        bucket  = "my-terraform-state"
+        key = "prod/terraform.tfstate
+        region  = "ap-south-1"
+        dynamodb_table = "terraform-lock"
+      }
+    }
+  ```
 
-### How do you target a specific resource for deployment?
+25. You updated an EC2 instance type, but terraform wants to destroy and recreate it instead of modifying it in-place. how do you prevent this?
+- use the `ignore_changes` lifecycle rule to keep the existing resources:
+   ```bash
+       resource "aws_instance" "example" {
+         ami = "ami-1233"
+         instance_type = "t2.micro"
+         lifecycle {
+           ignore_changes = [instance_type]
+         }
+       }
+   ```
 
-Use the -target flag with terraform apply or terraform plan.
+26. How do you target a specific resource for deployment?
+- Use the -target flag with terraform apply or terraform plan.
+- `terraform apply -target=aws_instance.example`
 
-terraform apply -target=aws_instance.example
 
-This will apply only that resource, useful in emergency fixes or incremental updates.
 
-    ⚠️ Avoid overusing — can cause dependency drift if misused.
+
+---
+# TERRAFORM COMMANDS
+
+| Command              | Description                                                                    |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `terraform init`     | Initializes the working directory (downloads providers, sets up backend, etc.) |
+| `terraform validate` | Validates the syntax of your configuration files                               |
+| `terraform fmt`      | Formats Terraform files to canonical style                                     |
+| `terraform version`  | Displays the Terraform version installed                                       |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `terraform plan`                | Shows what Terraform will do (preview changes)                               |
+| `terraform apply`               | Applies the changes required to reach the desired state                      |
+| `terraform apply -auto-approve` | Skips interactive approval during apply                                      |
+| `terraform refresh`             | Updates the state file with real infrastructure data (not recommended often) |
+| ---------------------------------------------- | -------------------------------------------- |
+| `terraform destroy`                            | Destroys all resources defined in the config |
+| `terraform destroy -target=resource_type.name` | Destroys a specific resource only            |
+| ------------------------------------ | ---------------------------------------------------- |
+| `terraform state list`               | Lists all resources in the current state             |
+| `terraform state show <resource>`    | Shows detailed state for a specific resource         |
+| `terraform state rm <resource>`      | Removes a resource from state (but not from infra)   |
+| `terraform state mv <source> <dest>` | Moves items in state from one name/module to another |
+| ---------------------------------------- | -------------------------------------- |
+| `terraform output`                       | Displays all outputs after apply       |
+| `terraform output <name>`                | Displays a specific output variable    |
+| `terraform apply -var='key=value'`       | Passes a variable via CLI              |
+| `terraform apply -var-file="dev.tfvars"` | Passes multiple variables using a file |
+| ------------------------- | ----------------------------------------------- |
+| `terraform get`           | Downloads and installs modules for the config   |
+| `terraform init -upgrade` | Re-initializes and upgrades modules & providers |
+| ----------------------------------- | --------------------------------- |
+| `terraform workspace list`          | Lists all available workspaces    |
+| `terraform workspace new <name>`    | Creates a new workspace           |
+| `terraform workspace select <name>` | Switches to a different workspace |
+| `terraform workspace delete <name>` | Deletes a workspace               |
+| ----------------------------- | -------------------------- |
+| `TF_LOG=DEBUG terraform plan` | Enables detailed logging   |
+| `TF_LOG_PATH=log.txt`         | Saves log output to a file |
+| ---------------------------------- | -------------------------------------------------- |
+| `terraform import <resource> <id>` | Brings an existing resource into Terraform control |
+| `terraform taint <resource>`       | Marks a resource for recreation during next apply  |
+| `terraform untaint <resource>`     | Cancels the taint                                  |
+| ----------------------- | ---------------------------------------- |
+| `-auto-approve`         | Skips prompts for approval               |
+| `-compact-warnings`     | Removes extra warnings                   |
+| `-lock=false`           | Disables state locking (not recommended) |
+| `-target=resource.name` | Targets specific resource(s) only        |
+
