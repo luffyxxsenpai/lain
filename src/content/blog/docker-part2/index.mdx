@@ -1,0 +1,118 @@
+---
+title: 'Docker Series - Part 2 - YOUTUBE'
+description: 'this blog covers the commands used in docker series part-2 video'
+date: 2025-08-012
+tags: ['youtube', 'docker']
+authors: ['luffy']
+image: 'docker-part2.png'
+---
+
+# 🐳 Docker Commands
+
+# 1. Run a New Container
+
+- syntax of the command
+```bash
+docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+```
+
+### Common Flags:
+- `-d` → Detached mode (run in background)
+- `-it` → Interactive + TTY (useful for shell access)
+- `--name NAME` → Assign a custom name
+- `-p HOST:CONTAINER` → Map host port to container port
+- `-P` → Publish all exposed ports to random host ports
+- `-e KEY=VALUE` → Set environment variables
+- `--env-file FILE` → Load env vars from file
+- `-v HOST:CONTAINER` → Mount volume
+- `--rm` → Automatically remove container when stopped
+- `--network NETWORK` → Connect to specific network
+- `--restart [no|always|on-failure:n|max-retries]` → Restart policy
+- `--hostname NAME` → Set container hostname
+- `--entrypoint CMD` → Override image entrypoint
+- `--cpus N` → Limit CPU usage
+- `--memory SIZE` → Limit RAM usage
+- `--user [USER, UID, UID:GID]` → Run container as specific user
+
+Example:
+```bash
+docker run -dit --name web -p 8080:80 -v $(pwd):/usr/share/nginx/html nginx
+```
+
+# 2. List Containers
+```bash
+docker ps [OPTIONS]
+```
+### Flags:
+
+- `-a` → Show all containers (default shows only running)
+- `-q` → Show only container IDs
+
+### 3. Start / Stop / Restart / Pause / Unpause Containers
+
+- `pause` suspends all processes inside a container
+```bash
+docker start CONTAINER
+docker stop CONTAINER
+docker restart CONTAINER
+docker pause CONTAINER
+docker unpause CONTAINER
+```
+
+### 4. Execute a Command Inside a Running Container
+```bash
+docker exec [OPTIONS] CONTAINER COMMAND
+```
+Flags:
+- `-it` → Interactive terminal
+- `--user USER` → Run command as specific user
+- `-w DIR` → Working directory inside container
+Example:
+```bash
+docker exec -it web bash
+```
+
+### 5. View Container Logs
+```bash
+docker logs [OPTIONS] CONTAINER
+```
+Flags:
+- `-f` → Follow logs (like tail -f)
+- `--tail N` → Show last N lines
+- `--since TIME` → Show logs since specific time
+- `--until TIME` → Show logs until specific time
+
+### 6. Inspect a Container
+```bash
+docker inspect CONTAINER
+```
+Flags:
+- `--format '{{.State.Status}}'` → Show specific field
+- `docker inspect --format '{{ .NetworkSettings.IPAddress }}' myapp`
+- `docker inspect --format '{{ .Config.Image }}' myapp`
+
+
+### 7. Copy Files To/From container
+```bash
+docker cp CONTAINER:/path/to/file host_path
+docker cp host_path CONTAINER:/path/to/file
+```
+`
+### 8. Rename/Remove a Container
+
+- Rename container
+```bash
+docker rename OLD_NAME NEW_NAME
+```
+- Remove Containers
+```bash
+docker rm [OPTIONS] CONTAINER
+```
+- Flags:
+- `-f` → Force removal (kill if running)
+- `-v` → Remove anonymous volumes attached
+
+### 9. Extra
+- To remove all stopped containers: `docker rm $(docker ps -aq)`
+- To stop all running containers: `docker stop $(docker ps -q)`
+- To clean up everything (containers, images, networks, volumes): `docker system prune -a --volumes`
