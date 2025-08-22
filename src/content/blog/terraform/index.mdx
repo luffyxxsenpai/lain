@@ -250,6 +250,9 @@ Terraform automatically locks the state in DynamoDB when using backend s3. if a 
 | ------------------------------- | ---------------------------------------------------------------------------- |
 | `terraform plan`                | Shows what Terraform will do (preview changes)                               |
 | `terraform apply`               | Applies the changes required to reach the desired state                      |
+| `terraform plan -refresh-only`  | check drift without overwriting state file                                   |
+| `terraform apply -refresh-only` | update the state file with new changes                                       |
+| `terraform plan/apply -replace="aws_s3.example" | mark resource as taint, replacement of replace                     |
 | `terraform apply -auto-approve` | Skips interactive approval during apply                                      |
 | `terraform refresh`             | Updates the state file with real infrastructure data (not recommended often) |
 | ---------------------------------------------- | -------------------------------------------- |
@@ -286,3 +289,394 @@ Terraform automatically locks the state in DynamoDB when using backend s3. if a 
 | `-lock=false`           | Disables state locking (not recommended) |
 | `-target=resource.name` | Targets specific resource(s) only        |
 
+---
+
+
+# rough
+
+# how to import existing resources in terraform?
+- old way
+- manually write down the resource we want to import and run terraform import command
+```terraform
+main.tf
+
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+```
+- `terraform import aws_s3_bucket.import-exmaple testbkrandom12q34r23498fjnd90osfyha90psdf`
+- new way, use import block, write your resource and use import block provided in terraform registry
+```terraform
+main.tf
+
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+
+import {
+  to = aws_s3_bucket.import-exmaple
+  id = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+```
+- ` terraform plan, apply`
+
+- done
+
+# backend and locking 
+
+- so previously we would use dynomodb to lock state but now since we have s3 native locking, dynamodb locking will be depricated and hashicorp suggest to move to s3 native locking 
+- it works by simply creating a lock file in the path path as terraform.tfstate when someone is running terraform, and if some other person will try to run any changes at the same time, terraform will try to fetch the state file from backend s3, it will also see a lock file there so will deny this new user request and once the lock is removed someone else can run any command
+
+```terraform
+terraform {
+  backend "s3" {
+    bucket       = "luffysenpaiterraformbucket"
+    key          = "myterra/terraform.tfstate"
+    region       = "ap-south-1"
+    profile      = "super"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+```
+- use_lockfile option enables the s3 native locking feature
+- encrypt flag allows s3 to encrypt data at rest, custom kms key can be provided 
+
+- force unlock - terraform force-unlock <LOCK_ID>
+
+# terraform lifecycle
+- so normally due to resource/api limitations, if terraform can't modify any resource for new changes, it will delete it first and create a new resource by default and we can modify this behaviour using terraform lifecycle
+
+- create_before_destroy - new replacement object is created first and then the old resource is deleted
+- ignore_changes - ignore any changes occured in this resource like auto scaling groups and other dynamic resource
+- prevent_destroy - cannot destroy this resource as long as this line is in the code, for critical and accidental deletion safety
+
+```terraform
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+# variables vs locals 
+- major difference is variables value can be given from cli or tfvars etc, basically externally but locals are fixed, it only can be overwritten by simply changing the config
+- variables are for input we want to change while locals are reusable values we dont want to change
+
+- so if i have a value and i assign it via variable block it can be modified by passing -var"key=value" or TF_VAR_key=value 
+- but if i define this value as a local, it wont be changed via these, we simply have to modify the locals code itself
+
+
+# drift
+- when someone manually modify the infra managed by terraform from console or something, you get a drift
+
+- first detect the drift - terraform plan -refresh-only 
+- it will compare the infra and state and simply output the changes, it wont update the terrafrom.tfstate file though
+
+- now if changes have to be reverted, simply rerun the current terrafrom configuration
+- if changes are meant to be now managed by terrafrom then 
+- terrafrom apply -refresh-only -> this will update the terraform.tfstate file with new changes 
+- but our code is still the old one , so we now update the code by modifying or importing the new resource 
+- now we have a uptodate state file and uptodate config so simply run a terraform apply and make sure there  are nothing to be created or destoryed 
+
+- terraform refresh is a depricated command replaced by -refresh-only flag cause it used to overwrite the state file 
+
+
+# multi environment deployment
+- there are multiple ways to achieve it 
+- seperate directory per environment 
+- same codebase but different tfvars for each environment 
+- modules + seperate root module for each env 
+- for multiple modules sharing values all i have to do is simply put a output block of that value and then i can simply use it by module.modulename.outputname
+
+```bash
+modules/
+  vpc/
+    - main.tf
+    - output.tf
+  ec2/
+  s3/
+envs/
+  dev/
+    main.tf  # uses modules with dev vars
+  staging/
+    main.tf
+  prod/
+    main.tf
+```
+
+# data types 
+- data types are categorized in primitive (basic) and complex data types
+- primitive has string, number, bool
+- complex has list, map, set 
+
+- string = double-quoted sentence "like this"
+- numbers = 15
+- bool = false/true
+
+- list
+- list are represented by a pair of [] and comma-seperated
+```bash
+variable "subnets" {
+  type    = list(string)
+  default = ["subnet-123", "subnet-456", "subnet-789"]
+}
+```
+
+
+- sets 
+-  a collection of unique values that do not have any secondary identifiers or ordering
+- terraform does not suport direct access of values through indexing, convert it to list to access it from index values
+```bash
+variable "zones" {
+  type    = set(string)
+  default = ["us-east-1a", "us-east-1b", "us-east-1a"]
+}
+
+```
+
+- maps
+- a key-value pair dictionary
+```bash
+variable "instance_types" {
+  type = map(string)
+  default = {
+    dev  = "t2.micro"
+    prod = "t2.large"
+  }
+}
+```
+
+- object
+- a map with fixed keys and predefined types of key
+
+```bash
+variable "app_config" {
+  type = object({
+    name        = string
+    replicas    = number
+    enable_logs = bool
+  })
+  default = {
+    name        = "myapp"
+    replicas    = 3
+    enable_logs = true
+  }
+}
+```
+
+# REAL ROUGH ONES
+
+# how to import existing resources in terraform?
+- old way
+- manually write down the resource we want to import and run terraform import command
+```terraform
+main.tf
+
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+```
+- `terraform import aws_s3_bucket.import-exmaple testbkrandom12q34r23498fjnd90osfyha90psdf`
+- new way, use import block, write your resource and use import block provided in terraform registry
+```terraform
+main.tf
+
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+
+import {
+  to = aws_s3_bucket.import-exmaple
+  id = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+}
+```
+- ` terraform plan, apply`
+
+- done
+
+# backend and locking 
+
+- so previously we would use dynomodb to lock state but now since we have s3 native locking, dynamodb locking will be depricated and hashicorp suggest to move to s3 native locking 
+- it works by simply creating a lock file in the path path as terraform.tfstate when someone is running terraform, and if some other person will try to run any changes at the same time, terraform will try to fetch the state file from backend s3, it will also see a lock file there so will deny this new user request and once the lock is removed someone else can run any command
+
+```terraform
+terraform {
+  backend "s3" {
+    bucket       = "luffysenpaiterraformbucket"
+    key          = "myterra/terraform.tfstate"
+    region       = "ap-south-1"
+    profile      = "super"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+```
+- use_lockfile option enables the s3 native locking feature
+- encrypt flag allows s3 to encrypt data at rest, custom kms key can be provided 
+
+- force unlock - terraform force-unlock <LOCK_ID>
+
+# terraform lifecycle
+- so normally due to resource/api limitations, if terraform can't modify any resource for new changes, it will delete it first and create a new resource by default and we can modify this behaviour using terraform lifecycle
+
+- create_before_destroy - new replacement object is created first and then the old resource is deleted
+- ignore_changes - ignore any changes occured in this resource like auto scaling groups and other dynamic resource
+- prevent_destroy - cannot destroy this resource as long as this line is in the code, for critical and accidental deletion safety
+
+```terraform
+resource "aws_s3_bucket" "import-exmaple" {
+  bucket = "testbkrandom12q34r23498fjnd90osfyha90psdf"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+# variables vs locals 
+- major difference is variables value can be given from cli or tfvars etc, basically externally but locals are fixed, it only can be overwritten by simply changing the config
+- variables are for input we want to change while locals are reusable values we dont want to change
+
+- so if i have a value and i assign it via variable block it can be modified by passing -var"key=value" or TF_VAR_key=value 
+- but if i define this value as a local, it wont be changed via these, we simply have to modify the locals code itself
+
+
+# drift
+- when someone manually modify the infra managed by terraform from console or something, you get a drift
+
+- first detect the drift - terraform plan -refresh-only 
+- it will compare the infra and state and simply output the changes, it wont update the terrafrom.tfstate file though
+
+- now if changes have to be reverted, simply rerun the current terrafrom configuration
+- if changes are meant to be now managed by terrafrom then 
+- terrafrom apply -refresh-only -> this will update the terraform.tfstate file with new changes 
+- but our code is still the old one , so we now update the code by modifying or importing the new resource 
+- now we have a uptodate state file and uptodate config so simply run a terraform apply and make sure there  are nothing to be created or destoryed 
+
+- terraform refresh is a depricated command replaced by -refresh-only flag cause it used to overwrite the state file 
+
+
+# multi environment deployment
+- there are multiple ways to achieve it 
+- seperate directory per environment 
+- same codebase but different tfvars for each environment 
+- modules + seperate root module for each env 
+- for multiple modules sharing values all i have to do is simply put a output block of that value and then i can simply use it by module.modulename.outputname
+
+```bash
+modules/
+  vpc/
+    - main.tf
+    - output.tf
+  ec2/
+  s3/
+envs/
+  dev/
+    main.tf  # uses modules with dev vars
+  staging/
+    main.tf
+  prod/
+    main.tf
+```
+
+# data types 
+- data types are categorized in primitive (basic) and complex data types
+- primitive has string, number, bool
+- complex has list, map, set 
+
+- string = double-quoted sentence "like this"
+- numbers = 15
+- bool = false/true
+
+- list
+- list are represented by a pair of [] and comma-seperated
+```bash
+variable "subnets" {
+  type    = list(string)
+  default = ["subnet-123", "subnet-456", "subnet-789"]
+}
+```
+
+
+- sets 
+-  a collection of unique values that do not have any secondary identifiers or ordering
+- terraform does not suport direct access of values through indexing, convert it to list to access it from index values
+```bash
+variable "zones" {
+  type    = set(string)
+  default = ["us-east-1a", "us-east-1b", "us-east-1a"]
+}
+
+```
+
+- maps
+- a key-value pair dictionary
+```bash
+variable "instance_types" {
+  type = map(string)
+  default = {
+    dev  = "t2.micro"
+    prod = "t2.large"
+  }
+}
+```
+
+- object
+- a map with fixed keys and predefined types of key
+
+```bash
+variable "app_config" {
+  type = object({
+    name        = string
+    replicas    = number
+    enable_logs = bool
+  })
+  default = {
+    name        = "myapp"
+    replicas    = 3
+    enable_logs = true
+  }
+}
+```
+
+# taint
+- terraform taint marks a resource for recreation the next time we run terraform apply 
+- terrafrom taint is depricated - it marked the state file permanently and would recreate at next terrafrom apply
+- terraform plan/apply -replace="resource" flag is the new way where it does not permanently mark the statefile 
+- with the old method, if you tainted something but forgot to apply, your teammates might accidentally destroy something later.
+- -replace is one shot
+
+
+# multi cloud 
+- so lets say you want to use multiple cloud providers like aws gcp azure in the same configuration
+- just give the provider block and start creating resources since terrafrom automatically picks which provider to use for which resoure using the prifix of resources like aws_s3 or google_storage etc
+
+- if we have multiple regions from same provider then we can use tthe alias\
+
+```bash
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "aws" {
+  alias  = "west"
+  region = "us-west-2"
+}
+
+resource "aws_instance" "east" {
+  provider      = aws.west
+  ami           = "ami-123456"
+  instance_type = "t2.micro"
+}
+
+```
+
+# count for each dynamic block
+- count is simple which creates multiple instances of something based on indexing for lists, if the order is changed then terraform will recreate everything 
+
+- for_each is used for maps or sets where it does not use indexing so if we even change the order terraform wont see this as a change and try to recreate everything
+
+- dynamic block is used when any configuratin is nested like security groups then we can use dynamic blocks
+
+  
