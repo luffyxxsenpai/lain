@@ -342,7 +342,7 @@ terraform {
 - use_lockfile option enables the s3 native locking feature
 - encrypt flag allows s3 to encrypt data at rest, custom kms key can be provided 
 
-- force unlock - terraform force-unlock <LOCK_ID>
+- force unlock - `terraform force-unlock <LOCK_ID>`
 
 # terraform lifecycle
 - so normally due to resource/api limitations, if terraform can't modify any resource for new changes, it will delete it first and create a new resource by default and we can modify this behaviour using terraform lifecycle
@@ -516,7 +516,7 @@ terraform {
 - use_lockfile option enables the s3 native locking feature
 - encrypt flag allows s3 to encrypt data at rest, custom kms key can be provided 
 
-- force unlock - terraform force-unlock <LOCK_ID>
+- force unlock - `terraform force-unlock LOCK_ID`
 
 # terraform lifecycle
 - so normally due to resource/api limitations, if terraform can't modify any resource for new changes, it will delete it first and create a new resource by default and we can modify this behaviour using terraform lifecycle
