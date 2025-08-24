@@ -1,0 +1,59 @@
+---
+title: 'TRIVY is easy'
+description: 'covers basic commands for trivy'
+date: 2025-08-24
+tags: ['basic', 'trivy', 'devops']
+authors: ['luffy']
+image: 'trivy.png'
+---
+
+# TRIVY
+- Trivy is a comprehensive security scanner. It is reliable, fast, extremely easy to use
+- Trivy has different scanners that look for different security issues, and different targets where it can find those issues.
+
+- Targets:
+    -Container Image
+    -Filesystem
+    -Git repository (remote)
+    -Kubernetes cluster or resource
+
+- Scanners:
+    -OS packages and software dependencies in use (SBOM)
+    -Known vulnerabilities (CVEs)
+    -IaC misconfigurations
+    - Sensitive information and secrets
+
+
+
+# scan docker image 
+- `trivy imgae nginx:latest`
+- useful flags 
+
+    - `--severity HIGH,CRITICAL` → Show only important ones
+    - `--ignore-unfixed` → Ignore issues with no fix yet
+    - `--exit-code 1` → Fail CI pipeline if issues found
+    - `--format table/json/sarif` → Output format
+
+- `trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json nginx:latest`
+
+
+# scan file system
+- `trivy fs .`
+- Scans your source code or build context (dependencies, secrets, IaC).
+
+- Flags:
+    - `--scanners vuln,secret,misconfig` → Choose what to scan
+    - `--skip-dirs vendor,node_modules` → Skip unnecessary dirs
+
+- `trivy fs --scanners vuln,secret,misconfig .`
+
+# trivy cache
+- Trivy downloads vulnerability databases (Vuln DBs) from Aqua Security (or mirrors) when scanning images, files, or repositories.
+- To avoid downloading them every time, it caches them locally (by default in ~/.cache/trivy/).
+- Trivy also caches previously scanned layers of Docker images to speed up re-scans.
+
+- `trivy image --download-db-only`  -  just download latest DB
+- `trivy image --skip-db-update ubuntu:20.04`   -  use existing DB, don’t refresh
+- `trivy image --cache-dir /tmp/trivy-cache nginx:latest` -   specify where cache is stored
+- `trivy image --refresh nginx:latest` -   ignore cache and force fresh scan
+- `trivy --reset` -  clear all caches
