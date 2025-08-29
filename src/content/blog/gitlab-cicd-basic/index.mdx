@@ -230,19 +230,3 @@ job2:
     script:
         - echo $MYVAR
 ```
-
-stages:
-    - a
-    - b
-    - c
-jobs1:
-    stage: a
-
-jobs2: 
-    stage: a
-    needs:
-     - a
-
-
-jobs:
-    stage: c
