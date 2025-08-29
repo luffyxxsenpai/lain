@@ -1,0 +1,248 @@
+---
+title: 'Gitlab CICD is best'
+description: 'basic points of Gitlab CICD'
+date: 2025-08-29
+tags: ['basic', 'cicd', 'devops']
+authors: ['luffy']
+image: 'cicd.png'
+---
+# GitLab CI/CD
+- These are the essential building blocks:
+- Pipelines , Stages and Jobs
+
+- A pipeline is essentially a series of processes, called Jobs, that get executed in Stages and in a particular order depending on the defined `.gitlab-ci.yml` file
+
+## define job
+```yaml
+job1:
+    script:
+        - echo "this is job1"
+        - echo "step 2 of this top"
+job2:
+    script:
+        - echo "this is job2"
+        - echo "as of now, they will run parallely"
+```
+
+## stage
+- run your jobs in sequence
+```yaml
+stages:
+    - build
+    - test
+job1:
+    stage: build
+    script:
+        - echo "ADD STAGE:NAME TAG IN YOUR JOBS TO LINK THEM"
+        - echo "NOW THIS RUNS FIRST"
+job2:
+    stage: test
+    script:
+        - echo "this is job2"
+        - echo "now they will, run after job1"
+```
+
+## before and after script
+- if before and after are defined outside any job, it will be global then
+- before_script to perfrom something before the main job like preparing the environment
+- after_script to perform something after the main job like cleanup of environment
+```yaml
+job1:
+    before_script:
+        - echo "i am preparing the environment"
+    script:
+        - echo "hello world"
+    after_script:
+        - echo "i am cleaing up the environment"
+```
+## variables in pipeline 
+- gitlab provides pre-defined ![variables](https://docs.gitlab.com/ci/variables/predefined_variables/)
+- variables can be defined in multiple ways in gitlab 
+
+```yaml
+# this is a globally defined variable 
+variables:
+    key: "value"
+    key2: "value"
+
+build:
+    script:
+        - echo "this will echo global variable $key"
+-----------------------------------------------------------------------------
+# this is a local variable which is job specific
+some-job:
+    variables:
+        KEY: "job-specific"
+        KEY2: "yeah"
+    script:
+        - echo " upper variables are this job specific only"
+-----------------------------------------
+variables:
+    MYVAR:
+        value: "true"   #default value
+        description: "this variable allow user to define its value when running pipeline"
+---------------------------------------------
+# Drop Down variable
+variables:
+    MYVARSS:
+        value: "build"
+        options:
+            - "test"
+            - "prod"
+            - "build"
+        description: "give user a drop down menu to choose variables from"
+-------------------------------------------------
+# SECRETS,TOKENS,API_KEYS,SENSITIVE VARIABELS can be defined in project/group setting of gitlab
+- projects -> settings -> variables -> ADD
+- there are two types
+    - visible: will print the value in logs
+    - masked: will show [MASKED] in logs 
+- Protect_Variables: if selected will only be available for protected branches else will be available for all branches
+- Expand_Variable: if there is any $ in the variable, it will refrence the value of it, if unchecked it will treat $ as string
+
+--------------------------------------------
+```
+
+## dependency in pipeline
+- needs can be used to define the dependency in between the jobs
+```yaml
+job1:
+    script:
+        - echo "hello"
+job2:
+    needs:
+        - job1
+    script:
+        - echo "hi"
+```
+## job execution with WHEN
+- when keyword has multiple options like:
+    - `on_success` -> defaults - run if all previous succeed
+    - `on_failure` -> run only if any previous job failed
+    - `always` -> run regardless of success/failure
+    - `manual` -> requires manual approval from gitlab ui
+    - `delayed` -> run after a timer 
+```yaml
+
+job3:
+  stage: deploy
+  script:
+    - echo "Deploying app"
+  when: manual
+```
+
+## pipeline execution control with workflow:rules
+- workflow rules controls the criteria when can a pipeline be executed and when not 
+- the whole idea is simply define the rules in if and weather it should be executed or not 
+```yaml
+workflow:
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "main"'
+          when: always
+        - if: '$CI_COMMIT_BRANCH == "/^feature/'
+          when: always
+        - when: never  
+```
+## job level execution control job:rules
+- more control on job level execution
+- rules are checked top to bottom and first match wins
+- we have: 
+    - if: -> rules based on variables
+    - changes: -> run job only if specific files changed
+    - exists: -> run if specific file(s) exist in repo
+- 
+
+```yaml
+job_name:
+  stage: test
+  script: echo "Running tests"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^feature/'
+      when: manual
+    - when: never
+
+#Runs automatically on main.
+#Appears as manual job on feature/* branches.
+# Skipped otherwise.
+```
+## pipeline template
+- we can create multiple templates of common tasks, store them in a repo and basically combine and use them in an actual pipeline
+- it can act like a pipeline repository
+- in this the stage should be same as defined in the template
+```yaml
+stage: 
+    - build
+    - test
+    - release
+include:
+    - project: "group/project/abc"
+      ref: main
+      file: 
+       - "build/mave.build.gitlab-ci.yml"
+       - "test/mave.test.gitlab-ci.yml"
+       - "release/mave.release.gitlab-ci.yml"
+```
+
+## artifacts 
+- since every job in gitlab runs in their own environment, to transfer anything from 1 job to other we use artifacts
+- reports are special type artifacts for structured reports that gitlab understand like dotenv, junit, sast, codequality etc
+- when decides when artifacts are uploaded: 
+    - always -> even if job fails 
+    - on_success -> only if job succeeds
+    - on_failure -> only if job fails 
+- exclude allows to exclude files 
+
+
+```yaml
+job1:
+    script:
+        - echo "hi" > example.txt
+    artifacts:
+        untracked: false
+        when: on_success
+        access: all
+        expire_in: 30days
+        paths:
+            - "example.txt"
+        exclude:
+            - /a/b/*/c
+
+job2:
+    script:
+        - echo example.txt
+    needs:
+        - "job1"
+```
+
+- pass variable from 1 job to another using reports 
+```yaml
+job1:
+    script:
+        - echo "$MYVAR=helloworld" > set.env
+    artifacts:
+        reports:
+            dotenv: set.env
+job2:
+    needs:
+        - job1
+    script:
+        - echo $MYVAR
+```
+
+stages:
+    - a
+    - b
+    - c
+jobs1:
+    stage: a
+
+jobs2: 
+    stage: a
+    needs:
+     - a
+
+
+jobs:
+    stage: c
