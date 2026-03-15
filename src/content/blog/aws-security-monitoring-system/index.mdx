@@ -7,4 +7,18 @@ authors: ['luffy']
 image: 'sec-mon.png'
 ---
 
-> watch this youtube video
+import { YouTube } from '@astro-community/astro-embed-youtube'
+
+## Watch this YouTube video
+
+<YouTube id="j1TwUj2d-v4" />
+
+## Core Steps
+
+1. creating a secret of other type and rest of the default value  
+2. create a cloud trail of type management event with s3 bucket, also select the exclude kms and rds events  
+3. edit the trail and enable the log management, it will result in creating log group  
+4. create a metric filter for the log group we just created and use "GetSecretValue" for filtering  
+5. create a alarm of type sum, your threshold and sns topic and the subscriber  
+6. confirm the sns subscription  
+7. access your secret more than your defined threshold
